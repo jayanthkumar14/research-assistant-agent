@@ -204,6 +204,7 @@ class ReActAgent:
         )
 
 
+# Convenience factory for common providers
 def create_agent(
     provider: str = "openai",
     model: Optional[str] = None,
@@ -226,10 +227,13 @@ def create_agent(
         },
         "groq": {
             "base_url": "https://api.groq.com/openai/v1",
+            # Valid as of late 2026; alternatives: llama-3.3-70b-versatile, openai/gpt-oss-20b
             "model": model or "qwen/qwen3.8-27b",
             "api_key": os.getenv("GROQ_API_KEY"),
         },
         "gemini": {
+            # Official OpenAI-compatible Gemini endpoint
+            # gemini-2.5-flash often returns 404 for new keys; use current flash model
             "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
             "model": model or "gemini-3.8-flash",
             "api_key": os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
@@ -241,6 +245,7 @@ def create_agent(
         },
         "openrouter": {
             "base_url": "https://openrouter.ai/api/v1",
+            # Free-tier models end with :free
             "model": model or "google/gemma-4-31b-it:free",
             "api_key": os.getenv("OPENROUTER_API_KEY"),
         },
@@ -250,9 +255,27 @@ def create_agent(
         raise ValueError(f"Unknown provider '{provider}'. Choose from {list(defaults)}")
 
     cfg = defaults[provider]
+    api_key = cfg.get("api_key")
+
+    # OpenAI can fall back to OPENAI_API_KEY inside ReActAgent.
+    # Other providers must have their own key — do not reuse a different provider's key
+    # against the wrong base_url (that causes 404 / 401 after a long wait).
+    if provider != "openai" and not api_key:
+        env_hints = {
+            "xai": "XAI_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "gemini": "GEMINI_API_KEY (or GOOGLE_API_KEY)",
+            "together": "TOGETHER_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+        }
+        raise ValueError(
+            f"No API key for provider '{provider}'. "
+            f"Set {env_hints.get(provider, 'the matching env var')} in backend/.env"
+        )
+
     return ReActAgent(
         model=cfg["model"],
         base_url=cfg.get("base_url"),
-        api_key=cfg.get("api_key"),
+        api_key=api_key,
         **kwargs,
     )
