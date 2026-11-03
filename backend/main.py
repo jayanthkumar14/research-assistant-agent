@@ -20,7 +20,6 @@ from pydantic import BaseModel, Field
 
 from agent import create_agent
 
-# Load .env from backend/ (or project root)
 load_dotenv()
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -30,7 +29,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Allow the frontend (any origin in dev; tighten for production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,7 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Path to frontend folder (sibling of backend/)
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
 
@@ -51,8 +48,8 @@ class ResearchRequest(BaseModel):
         examples=["Recent advances in solid-state batteries for electric vehicles"],
     )
     provider: str = Field(
-        default="openai",
-        description="LLM provider: openai | xai | groq | together | openrouter | Gemini",
+        default="gemini",
+        description="LLM provider: openai | xai | groq | gemini | together | openrouter",
     )
     model: Optional[str] = Field(default=None, description="Optional model override")
     max_turns: int = Field(default=12, ge=4, le=20)
@@ -72,16 +69,12 @@ def health():
     return {
         "status": "ok",
         "service": "research-assistant-agent",
-        "providers": ["openai", "xai", "groq", "together", "openrouter","Gemini",],
+        "providers": ["openai", "xai", "groq", "gemini", "together", "openrouter"],
     }
 
 
 @app.post("/api/research", response_model=ResearchResponse)
 def research(req: ResearchRequest):
-    """
-    Run the Research Assistant Agent on the given topic.
-    This can take 30–90 seconds depending on the topic and provider.
-    """
     topic = req.topic.strip()
     if not topic:
         raise HTTPException(status_code=400, detail="Topic cannot be empty")
@@ -92,17 +85,18 @@ def research(req: ResearchRequest):
             "OPENAI_API_KEY",
             "XAI_API_KEY",
             "GROQ_API_KEY",
+            "GEMINI_API_KEY",
+            "GOOGLE_API_KEY",
             "TOGETHER_API_KEY",
             "OPENROUTER_API_KEY",
-            "GEMINI_API_KEY",
         )
     )
     if not has_key:
         raise HTTPException(
             status_code=500,
             detail=(
-                "No API key configured. Copy backend/.env.example → backend/.env "
-                "and add your key. See README for where to get keys."
+                "No API key configured. Set GEMINI_API_KEY (or another provider key) "
+                "in the environment."
             ),
         )
 
@@ -148,10 +142,6 @@ def research(req: ResearchRequest):
     )
 
 
-# ---------------------------------------------------------------------------
-# Serve frontend (so you only need one server: http://localhost:8000)
-# ---------------------------------------------------------------------------
-
 @app.get("/")
 def serve_index():
     path = os.path.join(_FRONTEND_DIR, "index.html")
@@ -178,5 +168,4 @@ def serve_js():
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
