@@ -239,6 +239,11 @@ def create_agent(
             "model": model or "openai/gpt-4o-mini",
             "api_key": os.getenv("OPENROUTER_API_KEY"),
         },
+        "Gemini":{
+            "base URL": "https://generativelanguage.googleapis.com/v1beta/openai/"
+            "model": model or "gemini-2.5-flash"
+            "api_key": os.getenv("GEMINI_API_KEY"),
+        },
     }
 
     if provider not in defaults:
