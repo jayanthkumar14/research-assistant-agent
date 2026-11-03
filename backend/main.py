@@ -52,7 +52,7 @@ class ResearchRequest(BaseModel):
     )
     provider: str = Field(
         default="openai",
-        description="LLM provider: openai | xai | groq | together | openrouter",
+        description="LLM provider: openai | xai | groq | together | openrouter | Gemini",
     )
     model: Optional[str] = Field(default=None, description="Optional model override")
     max_turns: int = Field(default=12, ge=4, le=20)
@@ -72,7 +72,7 @@ def health():
     return {
         "status": "ok",
         "service": "research-assistant-agent",
-        "providers": ["openai", "xai", "groq", "together", "openrouter"],
+        "providers": ["openai", "xai", "groq", "together", "openrouter","Gemini",],
     }
 
 
@@ -94,6 +94,7 @@ def research(req: ResearchRequest):
             "GROQ_API_KEY",
             "TOGETHER_API_KEY",
             "OPENROUTER_API_KEY",
+            "GEMINI_API_KEY",
         )
     )
     if not has_key:
