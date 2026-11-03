@@ -127,7 +127,13 @@ def research(req: ResearchRequest):
     try:
         report = agent.run(topic)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Agent error ({req.provider}/"
+                f"{req.model or getattr(agent, 'model', 'default')}): {e}"
+            ),
+        )
     finally:
         if req.verbose:
             import builtins
