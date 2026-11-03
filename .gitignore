@@ -1,0 +1,34 @@
+# Environment & secrets
+.env
+.env.local
+backend/.env
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+.cache/
+tmp/
+temp/
+
+# Frontend (if you later add a bundler)
+node_modules/
+frontend/dist/

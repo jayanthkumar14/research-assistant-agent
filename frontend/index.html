@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Assistant Agent</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <div>
+          <h1>Research Assistant</h1>
+          <p class="tagline">LLM + tools · multi-step research agent</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="status-badge" class="badge badge-offline">Backend offline</span>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Input panel -->
+      <section class="panel input-panel">
+        <label for="topic">Research topic</label>
+        <textarea
+          id="topic"
+          rows="3"
+          placeholder="e.g. Recent advances in solid-state batteries for electric vehicles (2023–2025)"
+        ></textarea>
+
+        <div class="controls">
+          <div class="control-group">
+            <label for="provider">Provider</label>
+            <select id="provider">
+              <option value="openai">OpenAI</option>
+              <option value="xai">xAI (Grok)</option>
+              <option value="groq">Groq</option>
+              <option value="together">Together AI</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="model">Model (optional)</label>
+            <input id="model" type="text" placeholder="leave blank for default" />
+          </div>
+          <div class="control-group">
+            <label for="max-turns">Max turns</label>
+            <input id="max-turns" type="number" min="4" max="20" value="12" />
+          </div>
+        </div>
+
+        <button id="run-btn" class="btn-primary" type="button">
+          <span class="btn-text">Start Research</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </section>
+
+      <!-- Output panel -->
+      <section class="panel output-panel">
+        <div class="output-header">
+          <h2>Research Report</h2>
+          <button id="copy-btn" class="btn-ghost hidden" type="button">Copy</button>
+        </div>
+        <div id="placeholder" class="placeholder">
+          <p>Enter a topic and click <strong>Start Research</strong>.</p>
+          <p class="hint">The agent will search the web, browse sources, and write a structured report with references.</p>
+        </div>
+        <div id="error" class="error hidden"></div>
+        <article id="report" class="report hidden"></article>
+        <div id="meta" class="meta hidden"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>API: <code id="api-url">http://localhost:8000</code></span>
+      <span>·</span>
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub-ready</a>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
