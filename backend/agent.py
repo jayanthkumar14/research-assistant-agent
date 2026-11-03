@@ -5,7 +5,7 @@ The agent loops:
   Thought → Action → Observation
 until it produces a final research report (Answer).
 
-Works with any OpenAI-compatible chat API (OpenAI, xAI Grok, Groq, Together, etc.).
+Works with any OpenAI-compatible chat API (OpenAI, xAI Grok, Groq, Gemini, etc.).
 """
 
 from __future__ import annotations
@@ -84,10 +84,9 @@ class ReActAgent:
     ):
         """
         Args:
-            model:      Model name (e.g. "gpt-4o-mini", "grok-3", "llama-3.3-70b-versatile")
-            api_key:    API key. Falls back to OPENAI_API_KEY / XAI_API_KEY env vars.
-            base_url:   Optional base URL for OpenAI-compatible providers
-                        (e.g. "https://api.x.ai/v1" for Grok).
+            model:      Model name (e.g. "gpt-4o-mini", "gemini-2.5-flash", "qwen/qwen3.8-27b")
+            api_key:    API key. Falls back to env vars.
+            base_url:   Optional base URL for OpenAI-compatible providers.
             max_turns:  Safety limit on the number of Thought→Action cycles.
             verbose:    Print intermediate thoughts and observations.
         """
@@ -96,25 +95,31 @@ class ReActAgent:
         self.verbose = verbose
 
         # Resolve credentials
-        key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("XAI_API_KEY")
+        key = (
+            api_key
+            or os.getenv("OPENAI_API_KEY")
+            or os.getenv("XAI_API_KEY")
+            or os.getenv("GROQ_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("OPENROUTER_API_KEY")
+        )
         if not key:
             raise ValueError(
-                "No API key found. Set OPENAI_API_KEY or XAI_API_KEY, "
-                "or pass api_key=..."
+                "No API key found. Set OPENAI_API_KEY, GEMINI_API_KEY, GROQ_API_KEY, "
+                "or another supported key, or pass api_key=..."
             )
 
         client_kwargs = {"api_key": key}
         if base_url:
             client_kwargs["base_url"] = base_url
         elif os.getenv("XAI_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-            # Convenience: if only XAI key is present, point at xAI
             client_kwargs["base_url"] = "https://api.x.ai/v1"
             if model.startswith("gpt-"):
-                self.model = "grok-3"  # sensible default
+                self.model = "grok-3"
 
         self.client = OpenAI(**client_kwargs)
 
-        # Conversation history for this agent instance
         self.messages: list[dict] = [
             {
                 "role": "system",
@@ -157,9 +162,7 @@ class ReActAgent:
             if self.verbose:
                 print(reply)
 
-            # Did the model give a final Answer?
             if "Answer:" in reply:
-                # Extract everything after the last "Answer:"
                 answer = reply.split("Answer:")[-1].strip()
                 if self.verbose:
                     print(f"\n{'='*60}")
@@ -169,10 +172,8 @@ class ReActAgent:
                     print(f"\n{'='*60}\n")
                 return answer
 
-            # Look for an Action
             match = ACTION_RE.search(reply)
             if not match:
-                # Model didn't follow the format – ask it to continue properly
                 next_prompt = (
                     "Observation: You did not output a valid Action or Answer. "
                     "Please continue with either:\n"
@@ -203,7 +204,6 @@ class ReActAgent:
         )
 
 
-# Convenience factory for common providers
 def create_agent(
     provider: str = "openai",
     model: Optional[str] = None,
@@ -212,7 +212,7 @@ def create_agent(
     """
     Quick helper to create an agent for popular providers.
 
-    provider: "openai" | "xai" | "groq" | "together" | "openrouter"
+    provider: "openai" | "xai" | "groq" | "gemini" | "together" | "openrouter"
     """
     defaults = {
         "openai": {
@@ -226,8 +226,13 @@ def create_agent(
         },
         "groq": {
             "base_url": "https://api.groq.com/openai/v1",
-            "model": model or "llama-3.3-70b-versatile",
+            "model": model or "qwen/qwen3.8-27b",
             "api_key": os.getenv("GROQ_API_KEY"),
+        },
+        "gemini": {
+            "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "model": model or "gemini-2.5-flash",
+            "api_key": os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
         },
         "together": {
             "base_url": "https://api.together.xyz/v1",
@@ -236,13 +241,8 @@ def create_agent(
         },
         "openrouter": {
             "base_url": "https://openrouter.ai/api/v1",
-            "model": model or "openai/gpt-4o-mini",
+            "model": model or "google/gemma-4-31b-it:free",
             "api_key": os.getenv("OPENROUTER_API_KEY"),
-        },
-        "Gemini":{
-            "base URL": "https://generativelanguage.googleapis.com/v1beta/openai/"
-            "model": model or "gemini-2.5-flash"
-            "api_key": os.getenv("GEMINI_API_KEY"),
         },
     }
 
