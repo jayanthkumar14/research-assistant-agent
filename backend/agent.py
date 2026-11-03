@@ -231,7 +231,7 @@ def create_agent(
         },
         "gemini": {
             "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "model": model or "gemini-2.5-flash",
+            "model": model or "gemini-3.8-flash",
             "api_key": os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
         },
         "together": {
